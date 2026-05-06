@@ -6,6 +6,7 @@ A Vite + React + TypeScript shopping cart backed by Supabase. The app uses GitHu
 
 - Product catalog loaded from Supabase
 - Category filters and stock-aware add-to-cart buttons
+- Dedicated shopping cart page for review and checkout
 - Persistent per-user carts using Supabase GitHub login
 - Quantity controls, cart subtotal, and checkout form
 - `checkout_cart` Postgres RPC for order creation and inventory validation

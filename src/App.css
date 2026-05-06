@@ -90,10 +90,14 @@
 }
 
 .brand {
+  background: transparent;
+  border: 0;
   color: inherit;
+  cursor: pointer;
   font-size: 1.1rem;
   font-weight: 800;
   gap: 10px;
+  font-family: inherit;
   text-decoration: none;
 }
 
@@ -215,6 +219,26 @@
   margin: 12px 0;
 }
 
+.hero-stat button,
+.secondary-action {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  margin-top: 16px;
+  padding: 10px 14px;
+}
+
+.secondary-action {
+  background: var(--surface-strong);
+  border-color: var(--border);
+  color: var(--text);
+  margin-top: 0;
+}
+
 .alert,
 .migration-card,
 .success {
@@ -269,6 +293,10 @@
   margin-top: 28px;
 }
 
+.cart-layout {
+  display: block;
+}
+
 .catalog {
   flex: 1;
   min-width: 0;
@@ -287,6 +315,13 @@
   position: sticky;
   top: 24px;
   width: 400px;
+}
+
+.cart-page {
+  margin: 0 auto;
+  max-width: 940px;
+  position: static;
+  width: 100%;
 }
 
 .section-heading {
@@ -450,6 +485,10 @@
   gap: 14px;
 }
 
+.cart-items-page {
+  gap: 18px;
+}
+
 .cart-item {
   display: grid;
   gap: 12px;
@@ -484,6 +523,21 @@
   justify-content: space-between;
   margin-top: 22px;
   padding-top: 18px;
+}
+
+.checkout-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(220px, 0.7fr) minmax(280px, 1fr);
+  margin-top: 22px;
+}
+
+.checkout-grid .cart-total {
+  align-self: start;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  margin-top: 0;
+  padding: 18px;
 }
 
 .checkout-form {
@@ -560,6 +614,10 @@
     position: static;
   }
 
+  .checkout-grid {
+    grid-template-columns: 1fr;
+  }
+
   .section-heading {
     align-items: flex-start;
     flex-direction: column;
@@ -574,6 +632,7 @@
   .hero,
   .catalog,
   .cart-panel,
+  .cart-page,
   .setup-card {
     border-radius: 22px;
     padding: 18px;

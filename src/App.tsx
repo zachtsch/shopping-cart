@@ -82,6 +82,7 @@ function App() {
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [cartId, setCartId] = useState<string | null>(null)
   const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [activeView, setActiveView] = useState<'shop' | 'cart'>('shop')
   const [selectedCategory, setSelectedCategory] = useState('All')
   const [customerName, setCustomerName] = useState('')
   const [customerEmail, setCustomerEmail] = useState('')
@@ -290,6 +291,7 @@ function App() {
       setCartId(null)
       setCartItems([])
       setOrderId(null)
+      setActiveView('shop')
       setCustomerName('')
       setCustomerEmail('')
       await loadProducts()
@@ -467,12 +469,16 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
     <main className="app-shell">
       <header className="hero">
         <nav className="topbar">
-          <a className="brand" href={import.meta.env.BASE_URL} aria-label="Home">
+          <button
+            className="brand brand-button"
+            onClick={() => setActiveView('shop')}
+            type="button"
+          >
             <span className="brand-mark">
               <Store size={22} />
             </span>
             SupaCart
-          </a>
+          </button>
           <div className="topbar-actions">
             {currentUser ? (
               <>
@@ -508,10 +514,14 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                 Sign in with GitHub
               </button>
             )}
-            <a className="cart-pill" href="#cart">
+            <button
+              className="cart-pill auth-button"
+              onClick={() => setActiveView('cart')}
+              type="button"
+            >
               <ShoppingCart size={18} />
               {cartQuantity} item{cartQuantity === 1 ? '' : 's'}
-            </a>
+            </button>
           </div>
         </nav>
 
@@ -547,6 +557,9 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
             <span>Cart total</span>
             <strong>{formatCurrency(subtotalCents)}</strong>
             <small>{cartQuantity} item{cartQuantity === 1 ? '' : 's'} ready</small>
+            <button onClick={() => setActiveView('cart')} type="button">
+              Review cart
+            </button>
           </aside>
         </div>
       </header>
@@ -583,210 +596,227 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
           Loading your storefront...
         </section>
       ) : (
-        <div className="commerce-layout">
-          <section className="catalog" aria-labelledby="catalog-title">
-            <div className="section-heading">
-              <div>
-                <p>Catalog</p>
-                <h2 id="catalog-title">Shop products</h2>
+        <div
+          className={`commerce-layout ${activeView === 'cart' ? 'cart-layout' : ''}`}
+        >
+          {activeView === 'shop' ? (
+            <section className="catalog" aria-labelledby="catalog-title">
+              <div className="section-heading">
+                <div>
+                  <p>Catalog</p>
+                  <h2 id="catalog-title">Shop products</h2>
+                </div>
+                <div className="category-tabs" aria-label="Filter products by category">
+                  {categories.map((category) => (
+                    <button
+                      className={selectedCategory === category ? 'active' : ''}
+                      key={category}
+                      onClick={() => setSelectedCategory(category)}
+                      type="button"
+                    >
+                      {category}
+                    </button>
+                  ))}
+                </div>
               </div>
-              <div className="category-tabs" aria-label="Filter products by category">
-                {categories.map((category) => (
-                  <button
-                    className={selectedCategory === category ? 'active' : ''}
-                    key={category}
-                    onClick={() => setSelectedCategory(category)}
-                    type="button"
-                  >
-                    {category}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {visibleProducts.length === 0 ? (
-              <div className="empty-catalog">
-                <Store size={34} />
-                <strong>No products yet</strong>
-                <span>
-                  Run the Supabase migration to create the catalog and seed the
-                  starter products.
-                </span>
-              </div>
-            ) : (
-              <div className="product-grid">
-                {visibleProducts.map((product) => {
-                  const quantity = getProductQuantity(product.id)
-                  const isBusy = busyProductId === product.id
-                  const isSoldOut = product.inventory === 0
+              {visibleProducts.length === 0 ? (
+                <div className="empty-catalog">
+                  <Store size={34} />
+                  <strong>No products yet</strong>
+                  <span>
+                    Run the Supabase migration to create the catalog and seed the
+                    starter products.
+                  </span>
+                </div>
+              ) : (
+                <div className="product-grid">
+                  {visibleProducts.map((product) => {
+                    const quantity = getProductQuantity(product.id)
+                    const isBusy = busyProductId === product.id
+                    const isSoldOut = product.inventory === 0
 
-                  return (
-                    <article className="product-card" key={product.id}>
-                      <img src={product.image_url} alt="" />
-                      <div className="product-body">
-                        <span>{product.category}</span>
-                        <h3>{product.name}</h3>
-                        <p>{product.description}</p>
-                      </div>
-                      <div className="product-footer">
-                        <div>
-                          <strong>{formatCurrency(product.price_cents)}</strong>
-                          <small>
-                            {product.inventory} in stock
-                            {quantity ? ` • ${quantity} in cart` : ''}
-                          </small>
+                    return (
+                      <article className="product-card" key={product.id}>
+                        <img src={product.image_url} alt="" />
+                        <div className="product-body">
+                          <span>{product.category}</span>
+                          <h3>{product.name}</h3>
+                          <p>{product.description}</p>
                         </div>
-                        <button
-                          className="primary-action"
-                          disabled={
-                            isBusy ||
-                            isSigningIn ||
-                            isSoldOut ||
-                            quantity >= product.inventory
-                          }
-                          onClick={() => void handleAddItem(product)}
-                          type="button"
-                        >
-                          {isBusy || isSigningIn ? (
-                            <Loader2 className="spin" size={18} />
-                          ) : currentUser ? (
-                            <Plus size={18} />
-                          ) : (
-                            <LogIn size={18} />
-                          )}
-                          {isSoldOut ? 'Sold out' : currentUser ? 'Add' : 'Sign in'}
-                        </button>
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-
-          <aside className="cart-panel" id="cart" aria-labelledby="cart-title">
-            <div className="section-heading">
-              <div>
-                <p>Checkout</p>
-                <h2 id="cart-title">Your cart</h2>
-              </div>
-              <ShoppingCart size={24} />
-            </div>
-
-            {!currentUser ? (
-              <div className="empty-cart">
-                <LogIn size={34} />
-                <strong>Sign in to save a cart</strong>
-                <span>GitHub login creates your private Supabase cart.</span>
+                        <div className="product-footer">
+                          <div>
+                            <strong>{formatCurrency(product.price_cents)}</strong>
+                            <small>
+                              {product.inventory} in stock
+                              {quantity ? ` • ${quantity} in cart` : ''}
+                            </small>
+                          </div>
+                          <button
+                            className="primary-action"
+                            disabled={
+                              isBusy ||
+                              isSigningIn ||
+                              isSoldOut ||
+                              quantity >= product.inventory
+                            }
+                            onClick={() => void handleAddItem(product)}
+                            type="button"
+                          >
+                            {isBusy || isSigningIn ? (
+                              <Loader2 className="spin" size={18} />
+                            ) : currentUser ? (
+                              <Plus size={18} />
+                            ) : (
+                              <LogIn size={18} />
+                            )}
+                            {isSoldOut ? 'Sold out' : currentUser ? 'Add' : 'Sign in'}
+                          </button>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          ) : (
+            <section className="cart-panel cart-page" aria-labelledby="cart-title">
+              <div className="section-heading">
+                <div>
+                  <p>Shopping cart</p>
+                  <h2 id="cart-title">Review and order</h2>
+                </div>
                 <button
-                  className="checkout-button"
-                  disabled={isSigningIn}
-                  onClick={() => void handleSignIn()}
+                  className="secondary-action"
+                  onClick={() => setActiveView('shop')}
                   type="button"
                 >
-                  {isSigningIn ? <Loader2 className="spin" size={18} /> : null}
-                  Sign in with GitHub
+                  Continue shopping
                 </button>
               </div>
-            ) : cartItems.length === 0 ? (
-              <div className="empty-cart">
-                <ShoppingCart size={34} />
-                <strong>Your cart is empty</strong>
-                <span>Add a product to start an order.</span>
-              </div>
-            ) : (
-              <div className="cart-items">
-                {cartItems.map((item) => (
-                  <article className="cart-item" key={item.id}>
-                    <img src={item.product.image_url} alt="" />
-                    <div>
-                      <h3>{item.product.name}</h3>
-                      <span>
-                        {formatCurrency(item.product.price_cents)} each
-                      </span>
-                      <div className="quantity-controls">
-                        <button
-                          aria-label={`Decrease ${item.product.name}`}
-                          disabled={busyProductId === item.product.id}
-                          onClick={() =>
-                            void handleQuantityChange(item, item.quantity - 1)
-                          }
-                          type="button"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <strong>{item.quantity}</strong>
-                        <button
-                          aria-label={`Increase ${item.product.name}`}
-                          disabled={
-                            busyProductId === item.product.id ||
-                            item.quantity >= item.product.inventory
-                          }
-                          onClick={() =>
-                            void handleQuantityChange(item, item.quantity + 1)
-                          }
-                          type="button"
-                        >
-                          <Plus size={14} />
-                        </button>
-                        <button
-                          aria-label={`Remove ${item.product.name}`}
-                          disabled={busyProductId === item.product.id}
-                          onClick={() => void handleQuantityChange(item, 0)}
-                          type="button"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                    <strong>
-                      {formatCurrency(item.product.price_cents * item.quantity)}
-                    </strong>
-                  </article>
-                ))}
-              </div>
-            )}
 
-            {currentUser ? (
-              <>
-                <div className="cart-total">
-                  <span>Subtotal</span>
-                  <strong>{formatCurrency(subtotalCents)}</strong>
-                </div>
-
-                <div className="checkout-form">
-                  <label>
-                    Name
-                    <input
-                      autoComplete="name"
-                      onChange={(event) => setCustomerName(event.target.value)}
-                      placeholder="Ada Lovelace"
-                      value={customerName}
-                    />
-                  </label>
-                  <label>
-                    Email
-                    <input
-                      autoComplete="email"
-                      onChange={(event) => setCustomerEmail(event.target.value)}
-                      placeholder="ada@example.com"
-                      type="email"
-                      value={customerEmail}
-                    />
-                  </label>
+              {!currentUser ? (
+                <div className="empty-cart">
+                  <LogIn size={34} />
+                  <strong>Sign in to save a cart</strong>
+                  <span>GitHub login creates your private Supabase cart.</span>
                   <button
                     className="checkout-button"
-                    disabled={isCheckingOut || cartItems.length === 0}
-                    onClick={() => void handleCheckout()}
+                    disabled={isSigningIn}
+                    onClick={() => void handleSignIn()}
                     type="button"
                   >
-                    {isCheckingOut ? <Loader2 className="spin" size={18} /> : null}
-                    Create order
+                    {isSigningIn ? <Loader2 className="spin" size={18} /> : null}
+                    Sign in with GitHub
                   </button>
                 </div>
-              </>
-            ) : null}
-          </aside>
+              ) : cartItems.length === 0 ? (
+                <div className="empty-cart">
+                  <ShoppingCart size={34} />
+                  <strong>Your cart is empty</strong>
+                  <span>Add a product before creating an order.</span>
+                  <button
+                    className="secondary-action"
+                    onClick={() => setActiveView('shop')}
+                    type="button"
+                  >
+                    Shop products
+                  </button>
+                </div>
+              ) : (
+                <div className="cart-items cart-items-page">
+                  {cartItems.map((item) => (
+                    <article className="cart-item" key={item.id}>
+                      <img src={item.product.image_url} alt="" />
+                      <div>
+                        <h3>{item.product.name}</h3>
+                        <span>
+                          {formatCurrency(item.product.price_cents)} each
+                        </span>
+                        <div className="quantity-controls">
+                          <button
+                            aria-label={`Decrease ${item.product.name}`}
+                            disabled={busyProductId === item.product.id}
+                            onClick={() =>
+                              void handleQuantityChange(item, item.quantity - 1)
+                            }
+                            type="button"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <strong>{item.quantity}</strong>
+                          <button
+                            aria-label={`Increase ${item.product.name}`}
+                            disabled={
+                              busyProductId === item.product.id ||
+                              item.quantity >= item.product.inventory
+                            }
+                            onClick={() =>
+                              void handleQuantityChange(item, item.quantity + 1)
+                            }
+                            type="button"
+                          >
+                            <Plus size={14} />
+                          </button>
+                          <button
+                            aria-label={`Remove ${item.product.name}`}
+                            disabled={busyProductId === item.product.id}
+                            onClick={() => void handleQuantityChange(item, 0)}
+                            type="button"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
+                      <strong>
+                        {formatCurrency(item.product.price_cents * item.quantity)}
+                      </strong>
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              {currentUser ? (
+                <div className="checkout-grid">
+                  <div className="cart-total">
+                    <span>Subtotal</span>
+                    <strong>{formatCurrency(subtotalCents)}</strong>
+                  </div>
+
+                  <div className="checkout-form">
+                    <label>
+                      Name
+                      <input
+                        autoComplete="name"
+                        onChange={(event) => setCustomerName(event.target.value)}
+                        placeholder="Ada Lovelace"
+                        value={customerName}
+                      />
+                    </label>
+                    <label>
+                      Email
+                      <input
+                        autoComplete="email"
+                        onChange={(event) => setCustomerEmail(event.target.value)}
+                        placeholder="ada@example.com"
+                        type="email"
+                        value={customerEmail}
+                      />
+                    </label>
+                    <button
+                      className="checkout-button"
+                      disabled={isCheckingOut || cartItems.length === 0}
+                      onClick={() => void handleCheckout()}
+                      type="button"
+                    >
+                      {isCheckingOut ? <Loader2 className="spin" size={18} /> : null}
+                      Place order
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+            </section>
+          )}
         </div>
       )}
     </main>
