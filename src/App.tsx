@@ -156,14 +156,23 @@ function App() {
         throw sessionError
       }
 
-      const user = session?.user ?? null
+      let user = session?.user ?? null
 
       if (!user) {
-        setCurrentUser(null)
-        setCartId(null)
-        setCartItems([])
-        await loadProducts()
-        return
+        const { data: signInData, error: signInError } =
+          await supabase.auth.signInAnonymously()
+
+        if (signInError) {
+          throw new Error(
+            `Anonymous sign-in failed. Enable anonymous sign-ins in Supabase Auth settings. ${signInError.message}`,
+          )
+        }
+
+        user = signInData.user
+      }
+
+      if (!user) {
+        throw new Error('Supabase did not return an authenticated guest user.')
       }
 
       setCurrentUser(user)
@@ -171,7 +180,7 @@ function App() {
       setCustomerName(
         typeof user.user_metadata.full_name === 'string'
           ? user.user_metadata.full_name
-          : '',
+          : 'Guest Shopper',
       )
 
       const { data: cart, error: cartError } = await supabase
@@ -250,24 +259,25 @@ function App() {
 
   const handleSignIn = async () => {
     if (!supabase) {
-      setError('Connect Supabase before signing in.')
+      setError('Connect Supabase before starting a guest cart.')
       return
     }
 
     setIsSigningIn(true)
     setError('')
 
-    const { error: signInError } = await supabase.auth.signInWithOAuth({
-      options: {
-        redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
-      },
-      provider: 'github',
-    })
+    const { error: signInError } = await supabase.auth.signInAnonymously()
 
     if (signInError) {
-      setError(getErrorMessage(signInError))
+      setError(
+        `Anonymous sign-in failed. Enable anonymous sign-ins in Supabase Auth settings. ${signInError.message}`,
+      )
       setIsSigningIn(false)
+      return
     }
+
+    await bootstrap()
+    setIsSigningIn(false)
   }
 
   const handleSignOut = async () => {
@@ -477,7 +487,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
             {currentUser ? (
               <>
                 <span className="user-pill">
-                  {currentUser.email ?? 'GitHub shopper'}
+                  {currentUser.email ?? 'Guest shopper'}
                 </span>
                 <button
                   className="cart-pill auth-button"
@@ -490,7 +500,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                   ) : (
                     <LogOut size={18} />
                   )}
-                  Sign out
+                  Reset guest
                 </button>
               </>
             ) : (
@@ -505,7 +515,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                 ) : (
                   <LogIn size={18} />
                 )}
-                Sign in with GitHub
+                Start guest cart
               </button>
             )}
             <a className="cart-pill" href="#cart">
@@ -538,7 +548,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                 ) : (
                   <LogIn size={18} />
                 )}
-                Sign in with GitHub to start a cart
+                Start a guest cart
               </button>
             ) : null}
           </section>
@@ -654,7 +664,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                           ) : (
                             <LogIn size={18} />
                           )}
-                          {isSoldOut ? 'Sold out' : currentUser ? 'Add' : 'Sign in'}
+                          {isSoldOut ? 'Sold out' : currentUser ? 'Add' : 'Start cart'}
                         </button>
                       </div>
                     </article>
@@ -676,8 +686,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
             {!currentUser ? (
               <div className="empty-cart">
                 <LogIn size={34} />
-                <strong>Sign in to save a cart</strong>
-                <span>GitHub login creates your private Supabase cart.</span>
+                <strong>Start a guest cart</strong>
+                <span>Anonymous auth creates your private Supabase cart.</span>
                 <button
                   className="checkout-button"
                   disabled={isSigningIn}
@@ -685,7 +695,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                   type="button"
                 >
                   {isSigningIn ? <Loader2 className="spin" size={18} /> : null}
-                  Sign in with GitHub
+                  Start guest cart
                 </button>
               </div>
             ) : cartItems.length === 0 ? (
