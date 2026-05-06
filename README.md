@@ -21,8 +21,15 @@ https://oloocptvdvacubknnvbq.supabase.co/auth/v1/callback
 ```
 
 4. Add the GitHub OAuth app's client ID and client secret to the Supabase GitHub provider settings.
-5. Run `supabase/migrations/20260506131427_create_shopping_cart.sql` in the Supabase SQL editor or with the Supabase CLI. This creates six starter products: Everyday Tote, Desk Plant Trio, Ceramic Pour Over, Travel Tumbler, Linen Notebook, and Brass Pen.
-6. Copy `.env.example` to `.env.local` and fill in your project URL and publishable or anon key:
+5. Add the local and GitHub Pages URLs to **Authentication > URL Configuration > Redirect URLs**:
+
+```text
+http://localhost:5173/
+https://zachtsch.github.io/shopping-cart/
+```
+
+6. Run `supabase/migrations/20260506131427_create_shopping_cart.sql` in the Supabase SQL editor or with the Supabase CLI. This creates six starter products: Everyday Tote, Desk Plant Trio, Ceramic Pour Over, Travel Tumbler, Linen Notebook, and Brass Pen.
+7. Copy `.env.example` to `.env.local` and fill in your project URL and publishable or anon key:
 
 ```bash
 cp .env.example .env.local
@@ -45,3 +52,11 @@ npm run dev
 ```bash
 npm run build
 ```
+
+## GitHub Pages
+
+The repository includes a GitHub Actions workflow that builds and deploys the app to GitHub Pages. Add a repository secret named `SUPABASE_ANON_KEY` with your Supabase publishable key before the first deployment.
+
+## License
+
+MIT

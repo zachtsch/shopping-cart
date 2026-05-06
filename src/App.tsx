@@ -259,7 +259,7 @@ function App() {
 
     const { error: signInError } = await supabase.auth.signInWithOAuth({
       options: {
-        redirectTo: window.location.origin,
+        redirectTo: `${window.location.origin}${import.meta.env.BASE_URL}`,
       },
       provider: 'github',
     })
