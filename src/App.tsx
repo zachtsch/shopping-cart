@@ -600,7 +600,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
           className={`commerce-layout ${activeView === 'cart' ? 'cart-layout' : ''}`}
         >
           {activeView === 'shop' ? (
-            <section className="catalog" aria-labelledby="catalog-title">
+            <>
+              <section className="catalog" aria-labelledby="catalog-title">
               <div className="section-heading">
                 <div>
                   <p>Catalog</p>
@@ -678,7 +679,112 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
                   })}
                 </div>
               )}
-            </section>
+              </section>
+
+              <aside
+                className="cart-panel cart-preview"
+                aria-labelledby="cart-preview-title"
+              >
+                <div className="section-heading">
+                  <div>
+                    <p>Cart preview</p>
+                    <h2 id="cart-preview-title">Your cart</h2>
+                  </div>
+                  <ShoppingCart size={24} />
+                </div>
+
+                {!currentUser ? (
+                  <div className="empty-cart">
+                    <LogIn size={34} />
+                    <strong>Sign in to save a cart</strong>
+                    <span>GitHub login creates your private Supabase cart.</span>
+                    <button
+                      className="checkout-button"
+                      disabled={isSigningIn}
+                      onClick={() => void handleSignIn()}
+                      type="button"
+                    >
+                      {isSigningIn ? <Loader2 className="spin" size={18} /> : null}
+                      Sign in with GitHub
+                    </button>
+                  </div>
+                ) : cartItems.length === 0 ? (
+                  <div className="empty-cart">
+                    <ShoppingCart size={34} />
+                    <strong>Your cart is empty</strong>
+                    <span>Add a product to start an order.</span>
+                  </div>
+                ) : (
+                  <div className="cart-items">
+                    {cartItems.map((item) => (
+                      <article className="cart-item" key={item.id}>
+                        <img src={item.product.image_url} alt="" />
+                        <div>
+                          <h3>{item.product.name}</h3>
+                          <span>
+                            {formatCurrency(item.product.price_cents)} each
+                          </span>
+                          <div className="quantity-controls">
+                            <button
+                              aria-label={`Decrease ${item.product.name}`}
+                              disabled={busyProductId === item.product.id}
+                              onClick={() =>
+                                void handleQuantityChange(item, item.quantity - 1)
+                              }
+                              type="button"
+                            >
+                              <Minus size={14} />
+                            </button>
+                            <strong>{item.quantity}</strong>
+                            <button
+                              aria-label={`Increase ${item.product.name}`}
+                              disabled={
+                                busyProductId === item.product.id ||
+                                item.quantity >= item.product.inventory
+                              }
+                              onClick={() =>
+                                void handleQuantityChange(item, item.quantity + 1)
+                              }
+                              type="button"
+                            >
+                              <Plus size={14} />
+                            </button>
+                            <button
+                              aria-label={`Remove ${item.product.name}`}
+                              disabled={busyProductId === item.product.id}
+                              onClick={() => void handleQuantityChange(item, 0)}
+                              type="button"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+                        <strong>
+                          {formatCurrency(item.product.price_cents * item.quantity)}
+                        </strong>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                {currentUser ? (
+                  <>
+                    <div className="cart-total">
+                      <span>Subtotal</span>
+                      <strong>{formatCurrency(subtotalCents)}</strong>
+                    </div>
+                    <button
+                      className="checkout-button"
+                      disabled={cartItems.length === 0}
+                      onClick={() => setActiveView('cart')}
+                      type="button"
+                    >
+                      Review and order
+                    </button>
+                  </>
+                ) : null}
+              </aside>
+            </>
           ) : (
             <section className="cart-panel cart-page" aria-labelledby="cart-title">
               <div className="section-heading">
