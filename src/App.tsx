@@ -467,7 +467,7 @@ VITE_SUPABASE_ANON_KEY=your-anon-key`}</pre>
     <main className="app-shell">
       <header className="hero">
         <nav className="topbar">
-          <a className="brand" href="/" aria-label="Home">
+          <a className="brand" href={import.meta.env.BASE_URL} aria-label="Home">
             <span className="brand-mark">
               <Store size={22} />
             </span>
